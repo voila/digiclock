@@ -6,9 +6,13 @@ let component = ReasonReact.statelessComponent("Page");
 let make = (_children) => {
   /* spread the other default fields of component here and override a few */
   ...component,
-
+  subscriptions: (self) => [
+    Sub(
+      () => Js.Global.setInterval(() => Js.Date.(make() |> toLocaleTimeString) |> Js.log, 1000),
+      Js.Global.clearInterval
+    )
+  ],
   render: self => {
-    
     <div>
      ReasonReact.nullElement
     </div>;
