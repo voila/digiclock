@@ -30,7 +30,7 @@ let make = (_children) => {
     )
   ],
   render: self => {
-    <div>
+    <div id="digits">
      (ReasonReact.stringToElement(self.state))
     </div>;
   },
