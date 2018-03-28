@@ -3,6 +3,19 @@
 [@bs.new]
 external newDate: float => Js.Date.t = "Date" ;
 
+[@bs.send]
+external toString : (Js.Date.t, string) => string = "" ;
+
+let toLocaleTimeString : (Js.Date.t, string) => string = [%bs.raw {|
+  function (d, tz){
+    return d.toLocaleTimeString('en-NZ', { timeZone: tz });
+  }
+|}
+];  
+
+
+
+
 /* State declaration */
 type state = {
   time:float /* millisec since epoch */, 
@@ -12,7 +25,8 @@ type state = {
 /* Action declaration */
 type action =
   | Tick
-  | Time(float);
+  | Time(float)
+  | TimeZone(string);
 
 /* Component template declaration.
    Needs to be **after** state and action declarations! */
@@ -30,8 +44,12 @@ let make = (~time, ~tz, _children) => {
     | Time(t) => 
       ReasonReact.Update({...state, time:t})
     | Tick => 
-      /* Js.log(state.time); */
       ReasonReact.Update({...state, time: state.time +. 1000.})
+    | TimeZone(tz) => 
+      Js.log(tz);
+      ReasonReact.UpdateWithSideEffects(
+      {...state, tz}, 
+      (self => Tzdb.getTime(tz, t => self.send(Time(t)))))
     },
   subscriptions: (self) => [
     Sub(
@@ -43,10 +61,13 @@ let make = (~time, ~tz, _children) => {
 
   ],
   render: self => {
-    let dateString = newDate(self.state.time) |> Js.Date.toLocaleTimeString;
-    <div id="digits">
-     (ReasonReact.stringToElement(dateString))
-    </div>;
+    let dateString = newDate(self.state.time) |> d => toLocaleTimeString(d, self.state.tz);
+    <div>
+      <SelectTz cb=(tz => self.send(TimeZone(tz))) />
+      <div id="digits">
+        (ReasonReact.stringToElement(dateString))
+      </div>
+    </div>
   },
 };
 
